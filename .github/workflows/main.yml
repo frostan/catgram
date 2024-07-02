@@ -1,0 +1,155 @@
+name: Main kittygram workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13.10
+        env:
+          POSTGRES_USER: frostan
+          POSTGRES_PASSWORD: 12345
+          POSTGRES_DB: kittygram
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8==6.0.0 flake8-isort==6.0.0
+        pip install -r ./backend/ requirements.txt
+    - name: test with flake8 and django tests
+      env:
+        POSTGRES_USER: frostan
+        POSTGRES_PASSWORD: 12345
+        POSTGRES_DB: kittygram
+      run: |
+        python -m flake8 backend/
+        cd backend/
+        python manage.py test
+  build_and_push_to_docker_hub:
+    name: push image to dockerhub
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v3
+      - name: setup docker buildx
+        uses: docker/setup-buildx-actions@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: push to dockerhub
+        uses: docker/build-push-actions@v4
+        with:
+          context: ./backend/
+          push: true
+          tags: frostan/kittygram_backend:latest
+  frontend_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: setup nodeJS
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+    - name: install dependencies
+      run: |
+        cd frontend
+        npm ci
+    - name: test frontend
+      run: |
+        cd frontend
+        npm run test
+  build_frontend_and_push_to_dockerhub:
+    name: push frontend docker image to dockerhub
+    runs-on: ubuntu-latest
+    needs: frosntend_tests
+    steps:
+      - name: checkout to repo
+        uses: actions/checkout@v3
+      - name: setup docker buildx
+        uses: docker/setup-buildx-action@v2
+      - name: login to docker
+        uses: docker/login-actioons@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: push to dockerhub
+        with:
+          context: ./frontend/
+          push: true
+          tags: frostan/kittygram_frontend
+  build_gateway_and_push_to_dockerhub:
+    name: push gateway docker image to dockerhub
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout to repo
+        uses: actions/checkout@v3
+      - name: setup docker buildx
+        uses: docker/setup-buildx-actions@v2
+      - name: login to dockerhub
+        uses: docker/login-actions@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: push to dockerhub
+        uses: docker/build-push-actions@v4
+        with:
+          context: ./nginx/
+          push: true
+          tags: frostan/kittygram_gateway
+  deploy:
+    runs-on: ubuntu-latest
+    needs:
+      - build_and_push_to_docker_hub
+      - build_frontend_and_push_to_dockerhub
+      - build_gateway_and_push_to_dockerhub
+    steps:
+    - name: checkout repo
+      uses: actions/checkout@v3
+    - name: copy docker-compose.yml via ssh
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        passphrase: ${{secrets.SSH_PASSPHRASE }}
+        source: "docker-compose.production.yml"
+        target: "kittygram"
+    - name: executing remote ssh commands to depploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        passphrase: ${{secrets.SSH_PASSPHRASE }}
+      script:
+        cd kittygram
+        sudo docker compose -f docker-compose.production.yml pull
+        sudo docker compose -f docker-compose.production.yml down
+        sudo docker compose -f docker-compose.production.yml up -d
+        sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+        sudo docker compose -f docker-compose.production.yml exec backned python manage.py collectstatic
+        sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /backend_static/static
+  send_message:
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+    - name: SEND MESSAGE TO TELEGRAM
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        message: Деплой успешно выполнен!
