@@ -1,4 +1,4 @@
-version: 3
+version: '3'
 volumes:
   pg_data:
   static:
@@ -29,6 +29,7 @@ services:
     image: frostan/kittygram_gateway
     env_file: .env
     volumes:
-      - static_volume:/staticfiles/
+      - static:/staticfiles/
+      - media:/media
     ports:
       - 9000:80
