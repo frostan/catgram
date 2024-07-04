@@ -14,8 +14,8 @@ services:
     image: frostan/kittygram_backend
     env_file: .env
     volumes:
-      - static:/static_backend
-      - media:/app/media
+      - static:/backend_static
+      - media:/media
     depends_on:
       - db
 
@@ -29,7 +29,7 @@ services:
     image: frostan/kittygram_gateway
     env_file: .env
     volumes:
-      - static:/static_backend
+      - static:/static
       - media:/media
     ports:
       - 9000:80
