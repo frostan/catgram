@@ -1,6 +1,6 @@
-# flake8: noqa
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,7 +11,12 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = os.getenv('DEBUG') == 'True'
 
-ALLOWED_HOSTS = ['84.201.142.188','localhost','127.0.0.1','kittygram-project.zapto.org']
+ALLOWED_HOSTS = [
+    '84.201.142.188',
+    'localhost',
+    '127.0.0.1',
+    'kittygram-project.zapto.org'
+    ]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
