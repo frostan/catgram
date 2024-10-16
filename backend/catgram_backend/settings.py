@@ -15,7 +15,7 @@ ALLOWED_HOSTS = [
     '84.201.142.188',
     'localhost',
     '127.0.0.1',
-    'kittygram-project.zapto.org'
+    'catgram-project.zapto.org'
     ]
 
 INSTALLED_APPS = [
@@ -41,7 +41,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'kittygram_backend.urls'
+ROOT_URLCONF = 'catgram_backend.urls'
 
 TEMPLATES = [
     {
@@ -59,23 +59,20 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'kittygram_backend.wsgi.application'
+WSGI_APPLICATION = 'catgram_backend.wsgi.application'
 
 
 DATABASES = {
     'default': {
-        'ENGINE':'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB','django'),
-        'USER': os.getenv('POSTGRES_USER','django'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD',''),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', ''),
+        'USER': os.getenv('POSTGRES_USER', ''),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', ''),
         'PORT': os.getenv('DB_PORT', 5432)
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -92,7 +89,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-RU'
 
 TIME_ZONE = 'UTC'
 
@@ -113,7 +110,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated', 
+        'rest_framework.permissions.IsAuthenticated',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
