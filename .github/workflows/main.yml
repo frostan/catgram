@@ -14,7 +14,8 @@ jobs:
         env:
           POSTGRES_USER: frostan
           POSTGRES_PASSWORD: 12345
-          POSTGRES_DB: kittygram
+          POSTGRES_DB: catgram
+          DB_HOST: db
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
@@ -34,7 +35,7 @@ jobs:
       env:
         POSTGRES_USER: frostan
         POSTGRES_PASSWORD: 12345
-        POSTGRES_DB: kittygram
+        POSTGRES_DB: catgram
         DB_HOST: 127.0.0.1
         DB_PORT: 5432
         SECRET_KEY: ${{secrets.SECRET_KEY}}
@@ -66,7 +67,7 @@ jobs:
           context: ./backend/
 
           push: true
-          tags: frostan/kittygram_backend:latest
+          tags: frostan/catgram_backend:latest
 
   frontend_tests:
     runs-on: ubuntu-latest
@@ -105,7 +106,7 @@ jobs:
         with:
           context: ./frontend/
           push: true
-          tags: frostan/kittygram_frontend:latest
+          tags: frostan/catgram_frontend:latest
 
   build_gateway_and_push_to_docker_hub:
     name: Push gateway Docker image to DockerHub
@@ -126,7 +127,7 @@ jobs:
           context: ./nginx/
           push: true
           # Тут вместо username должен быть ваш логин на Docker Hub
-          tags: frostan/kittygram_gateway:latest
+          tags: frostan/catgram_gateway:latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -145,7 +146,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         source: "docker-compose.production.yml"
-        target: "kittygram"
+        target: "catgram"
     - name: Executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
       with:
@@ -154,7 +155,7 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
-          cd kittygram
+          cd catgram
           # Выполняет pull образов с Docker Hub
           sudo docker compose -f docker-compose.production.yml pull
           # Перезапускает все контейнеры в Docker Compose

@@ -11,7 +11,7 @@ services:
     volumes:
       - pg_data_new:/var/lib/postgresql/data
   backend:
-    image: frostan/kittygram_backend
+    image: frostan/catgram_backend
     env_file: .env
     volumes:
       - static:/backend_static
@@ -20,13 +20,13 @@ services:
       - db
 
   frontend:
-    image: frostan/kittygram_frontend
+    image: frostan/catgram_frontend
     env_file: .env
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
   gateway:
-    image: frostan/kittygram_gateway
+    image: frostan/catgram_gateway
     env_file: .env
     volumes:
       - static:/static
